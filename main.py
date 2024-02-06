@@ -118,7 +118,7 @@ def selection(frame):
     startButton.place(x=105, y=350, width=280, height=50)
 
     # Return to Menu
-    returnButton = tkinter.Button(frame, text="menu", command=lambda: menu(frame))
+    returnButton = tkinter.Button(frame, text="Menu", command=lambda: menu(frame))
     returnButton.place(x=10, y=470, width=50, height=25)
 
 
@@ -142,34 +142,72 @@ def questionGrab(frame, subject, topic):
         questions = load(subject.lower(), topic.lower())
     except KeyError:
         tkinter.Label(frame, text="Select a valid topic", fg="red").place(x=105, y=400, width=280)
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        print(e)
         tkinter.Label(frame, text="Select a valid subject", fg="red").place(x=105, y=400, width=280)
     else:
         quiz(frame, questions)
 
 
-def quiz(frame, questions):
+def quiz(frame, questions, questionNumber=1, correct=0, incorrect=0):
     clear(frame)
-    questionNumber = 1
     random.shuffle(questions)
     title = tkinter.Label(frame, text=f"Question {questionNumber}", font=("Helvetica", 20, "bold"))
     title.place(x=0, y=10, width=500, height=50)
 
-    questionAnswer = questions.pop(0)
-    question = tkinter.Label(frame, text=questionAnswer[0], font=("Helvetica", 18), wraplength=455)
-    question.place(x=0, y=100, width=500, height=150)
+    if questions:
+        questionAnswer = questions.pop(0)
 
-    answerBox = tkinter.Entry(frame, font=("Helvetica", 18), justify="center")
-    answerBox.place(x=50, y=300, height=50, width=400)
+        question = tkinter.Label(frame, text=questionAnswer[0], font=("Helvetica", 18), wraplength=455)
+        question.place(x=0, y=100, width=500, height=150)
 
-    submitButton = tkinter.Button(frame, text="Submit", font=("Helvetica", 15), command=lambda: quiz_check(answerBox.get(), questionAnswer[1]))
-    submitButton.place(x=150, y=360, height=40, width=200)
+        answerBox = tkinter.Entry(frame, font=("Helvetica", 18), justify="center")
+        answerBox.place(x=50, y=300, height=50, width=400)
+
+        submitButton = tkinter.Button(frame, text="Submit", font=("Helvetica", 15),
+                                      command=lambda: quiz_check(frame, answerBox.get(), questionAnswer, questions,
+                                                                 questionNumber, correct, incorrect))
+        submitButton.place(x=150, y=360, height=40, width=200)
+
+        returnButton = tkinter.Button(frame, text="Return", command=lambda: selection(frame))
+        returnButton.place(x=10, y=470, width=50, height=25)
+    else:
+        quizComplete(frame, correct, incorrect)
 
 
-def quiz_check(entered, correct):
-    right = check(entered.lower(), correct)
+def quiz_check(frame, entered, questionAnswer, questions, questionNumber, correct, incorrect):
+    right = check(entered.lower(), questionAnswer[1])
+    questionNumber += 1
     if right:
-        print("Correct")
+        tkinter.Label(frame, text="Correct", fg="green", font=("Helvetica", 12)).place(x=0, y=270, width=500, height=30)
+        correct += 1
+    else:
+        tkinter.Label(frame, text=f"Incorrect, it was {questionAnswer[1]}", fg="red", font=("Helvetica", 12)).place(x=0,
+                                                                                                                    y=270,
+                                                                                                                    width=500,
+                                                                                                                    height=30)
+        incorrect += 1
+
+    tkinter.Button(frame, text="Continue", font=("Helvetica", 10),
+                   command=lambda: quiz(frame, questions, questionNumber, correct, incorrect)).place(x=200, y=405,
+                                                                                                     width=100,
+                                                                                                     height=30)
+
+
+def quizComplete(frame, correct, incorrect):
+    clear(frame)
+    tkinter.Label(frame, text="Quiz Complete", font=("Helvetica", 25, "bold")).pack()
+    tkinter.Label(frame, text=f"{correct} correctly answered", font=("Helvetica", 20), fg="green").place(x=0, y=200,
+                                                                                                         width=500,
+                                                                                                         height=50)
+    tkinter.Label(frame, text=f"{incorrect} incorrectly answered", font=("Helvetica", 20), fg="red").place(x=0, y=250,
+                                                                                                           width=500,
+                                                                                                           height=50)
+    tkinter.Button(frame, text="Return to menu", font=("Helvetica", 18), command=lambda: menu(frame)).place(x=150,
+                                                                                                            y=350,
+                                                                                                            width=200,
+                                                                                                            height=50)
+
 
 # setting up the tkinter window
 root = tkinter.Tk()
