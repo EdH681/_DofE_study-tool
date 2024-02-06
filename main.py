@@ -198,11 +198,12 @@ def addMenu(frame):
     1. create a text file anywhere on your computer\n
     2. name the file <topic name>.txt\n
     3. type the questions and answers with a separator between them\n
-    4. copy/paste the text file location into the box
+    4. copy/paste the text file location into the box\n
+    TIP: keep any text files in a folder so you can redo\nthem if something goes wrong
     """
 
     info = tkinter.Label(frame, text=howToText, font=("Helvetica", 12))
-    info.place(x=0, y=75, width=500)
+    info.place(x=0, y=50, width=500)
 
     returnButton = tkinter.Button(frame, text="Menu", command=lambda: menu(frame))
     returnButton.place(x=10, y=470, width=50, height=25)
@@ -232,6 +233,7 @@ def addMenu(frame):
 
 def addChecks(frame, subject, separator, filename, sub, sep, file):
     tiptop = True
+    filename = filename.strip('"')
 
     # is a separator selected
     if separator == "Select an Option":
@@ -255,10 +257,9 @@ def addChecks(frame, subject, separator, filename, sub, sep, file):
         sub["fg"] = "black"
 
     # does the text file exist
-    fName = filename.split(".")[0].strip('"')
+    fName = filename.split(".")[0]
     try:
         test = open(f"{fName}.txt", "r")
-        print(test.readlines())
         test.close()
     except FileNotFoundError:
         file["fg"] = "red"
@@ -268,11 +269,8 @@ def addChecks(frame, subject, separator, filename, sub, sep, file):
 
     # does the json file exist
     rawName = fName.split("\\")[-1].split(".")[0].lower()
-    if not os.path.exists(f"subjects/{subject}.json") and subject:
-        print("making new json file for subject")
-    else:
+    if os.path.exists(f"subjects/{subject}.json"):
         if subject:
-            print("json file exists")
             with open(f"subjects/{subject}.json", "r") as find:
                 search = json.load(find)
                 exists = False
@@ -284,16 +282,44 @@ def addChecks(frame, subject, separator, filename, sub, sep, file):
                         exists = True
                 if not exists:
                     tkinter.Label(frame, text="", fg="red").place(x=0, y=380, width=500)
-                    print("make topic")
+        else:
+            tiptop = False
+
+    if tiptop:
+        add(frame, subject, rawName, filename, separator)
 
 
-# setting up the tkinter window
+def add(frame, subject, topic, path, separator):
+    with open(path, "r") as pull:
+        full = pull.readlines()
+        questions = [i.split(separator)[0].strip() for i in full]
+        answers = [i.split(separator)[1].strip() for i in full]
+    info = {}
+    for q, a in zip(questions, answers):
+        info[q] = a
+    print(info)
+    if not os.path.exists(f"subjects/{subject}.json"):
+        with open(f"subjects/{subject}.json", "w") as create:
+            json.dump({}, create)
+    with open(f"subjects/{subject}.json", "r") as get:
+        current = json.load(get)
+    current[topic] = info
+    try:
+        with open(f"subjects/{subject}.json", "w") as send:
+            json.dump(current, send)
+    except Exception:
+        tkinter.Label(frame, text="Error adding set", fg="red").place(x=0, y=450, width=500)
+    else:
+        tkinter.Label(frame, text="Set added successfully", fg="green").place(x=0, y=450, width=500)
+
+
+# MAIN =================================================================================================================
 splashRoot = tkinter.Tk()
 splashRoot.geometry(f"200x200")
 nerd = tkinter.PhotoImage(file="assets/nerd.png")
 tkinter.Label(splashRoot, image=nerd).pack()
 
-splashRoot.after(200, lambda: main(splashRoot))
+splashRoot.after(500, lambda: main(splashRoot))
 
 
 def main(splash):
