@@ -9,7 +9,7 @@
     "An attribute in a table which is a primary key in another": "foreign key",
     "Turning a flat file database into the best possible relational database": "normalisation"
   },
-  "software and OS": {
+  "software and os": {
 
   }
 }
