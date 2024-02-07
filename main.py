@@ -1,9 +1,10 @@
 import json
 import tkinter
 import tkinter.ttk as ttk
+import tkinter.messagebox
 import os
 import random
-
+import subprocess
 
 def load(subject, topic):
     with open(f"subjects/{subject}.json", "r") as retrieve:
@@ -60,7 +61,7 @@ def menu(frame):
 
     # Remove Button
     removeText = "Remove a Question Set"
-    removeButton = tkinter.Button(frame, text=removeText, font=("Helvetica", 20))
+    removeButton = tkinter.Button(frame, text=removeText, font=("Helvetica", 20), command=lambda: remove_menu(frame))
     removeButton.place(x=50, y=baseY + 165, width=400, height=50)
 
 
@@ -197,13 +198,13 @@ def addMenu(frame):
     howToText = """
     1. create a text file anywhere on your computer\n
     2. name the file <topic name>.txt\n
-    3. type the questions and answers with a separator between them\n
+    3. type the question then the answer with a separator between them\n
     4. copy/paste the text file location into the box\n
     TIP: keep any text files in a folder so you can redo\nthem if something goes wrong
     """
 
     info = tkinter.Label(frame, text=howToText, font=("Helvetica", 12))
-    info.place(x=0, y=50, width=500)
+    info.place(x=0, y=50, width=500, height=180)
 
     returnButton = tkinter.Button(frame, text="Menu", command=lambda: menu(frame))
     returnButton.place(x=10, y=470, width=50, height=25)
@@ -313,9 +314,88 @@ def add(frame, subject, topic, path, separator):
         tkinter.Label(frame, text="Set added successfully", fg="green").place(x=0, y=450, width=500)
 
 
+# REMOVE ===============================================================================================================
+def remove_menu(frame):
+    clear(frame)
+
+    tkinter.Label(frame, text="Remove a Set", font=("Helvetica", 20, "bold")).pack()
+    returnButton = tkinter.Button(frame, text="Menu", command=lambda: menu(frame))
+    returnButton.place(x=10, y=470, width=50, height=25)
+
+    options = ["Select an option"]
+    for subject in os.listdir("subjects"):
+        if subject.split(".")[1] == "json":
+            options.append(subject.split(".")[0].title())
+
+    topicLabel = tkinter.Label(frame, text="Select the topic you want to delete", font=("Helvetica", 12, "bold"))
+    topicLabel.place(x=0, y=250, width=500)
+    topicSelect = ttk.Combobox(frame, values=["Select an Option"], state="disabled", width=51)
+    topicSelect.current(0)
+    topicSelect.place(x=85, y=280)
+
+    subjectLabel = tkinter.Label(frame, text="Select the subject to delete from", font=("Helvetica", 12, "bold"))
+    subjectLabel.place(x=0, y=120, width=500)
+    subjectSelect = ttk.Combobox(frame, values=options, width=30, state="readonly")
+    subjectSelect.current(0)
+    subjectSelect.place(x=85, y=150)
+
+    subButton = tkinter.Button(frame, text="Select", command=lambda: remove_check(subjectSelect.get(), topicSelect))
+    subButton.place(x=315, y=150, height=22, width=100)
+
+    submitButton = tkinter.Button(frame, text="Delete", font=("Helvetica", 15), command=lambda: delete(frame, subjectSelect.get().lower(), topicSelect.get()))
+    submitButton.place(x=150, y=320, width=200, height=40)
+
+    location = f"{os.path.dirname(__file__)}/subjects"
+
+    tkinter.Label(frame, text="Alternatively, open the folder and edit the JSON file").place(x=0, y=400, width=500)
+    fileButton = tkinter.Button(frame, text="Open Folder", font=("Helvetica", 15), command=lambda: subprocess.Popen('explorer "subjects"'))
+    fileButton.place(x=175, y=430, width=150, height=40)
+
+
+def remove_check(value, box):
+    if value != "Select an option":
+        box["state"] = "readonly"
+        topics = ["Select an option", "All of it"]
+        with open(f"subjects/{value}.json", "r") as topicList:
+            data = json.load(topicList)
+            for topic in data:
+                topics.append(topic)
+        box["values"] = topics
+    else:
+        box['state'] = "disabled"
+        box["values"] = ["Select an Option"]
+        box.current(0)
+
+def delete(frame, subject, topic):
+
+    print()
+
+    if topic == "All of it":
+        if tkinter.messagebox.askyesno("Warning", f"Do you want to delete {subject}?"):
+            try:
+                os.remove(f"subjects/{subject}.json")
+            except FileNotFoundError:
+                tkinter.Label(frame, text="This subject doesn't exist", fg="red").place(x=0, y=370, width=500)
+            else:
+                tkinter.Label(frame, text="Subject deleted successfully", fg="green").place(x=0, y=370, width=500)
+    else:
+        if tkinter.messagebox.askyesno("Warning", f"Do you want to delete {topic}?"):
+            try:
+                with open(f"subjects/{subject}.json", "r") as retrieve:
+                    data = json.load(retrieve)
+                del data[topic]
+                with open(f"subjects/{subject}.json", "w") as update:
+                    json.dump(data, update)
+            except KeyError:
+                tkinter.Label(frame, text="This topic doesn't exist", fg="red").place(x=0, y=370, width=500)
+            else:
+                tkinter.Label(frame, text="Topic deleted successfully", fg="green").place(x=0, y=370, width=500)
+
+
 # MAIN =================================================================================================================
 splashRoot = tkinter.Tk()
 splashRoot.geometry(f"200x200")
+splashRoot.title("")
 nerd = tkinter.PhotoImage(file="assets/nerd.png")
 tkinter.Label(splashRoot, image=nerd).pack()
 
@@ -326,7 +406,7 @@ def main(splash):
     splash.destroy()
     root = tkinter.Tk()
     root.iconbitmap("assets/nerd.ico")
-    root.title("Not sure what to call this 🤷")
+    root.title("Academic Weaponiser")
     root.geometry("500x500")
     root.resizable(False, False)
     menu(root)
