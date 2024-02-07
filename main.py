@@ -6,6 +6,7 @@ import os
 import random
 import subprocess
 
+
 def load(subject, topic):
     with open(f"subjects/{subject}.json", "r") as retrieve:
         data = json.load(retrieve)[topic]
@@ -342,13 +343,13 @@ def remove_menu(frame):
     subButton = tkinter.Button(frame, text="Select", command=lambda: remove_check(subjectSelect.get(), topicSelect))
     subButton.place(x=315, y=150, height=22, width=100)
 
-    submitButton = tkinter.Button(frame, text="Delete", font=("Helvetica", 15), command=lambda: delete(frame, subjectSelect.get().lower(), topicSelect.get()))
+    submitButton = tkinter.Button(frame, text="Delete", font=("Helvetica", 15),
+                                  command=lambda: delete(frame, subjectSelect.get().lower(), topicSelect.get()))
     submitButton.place(x=150, y=320, width=200, height=40)
 
-    location = f"{os.path.dirname(__file__)}/subjects"
-
     tkinter.Label(frame, text="Alternatively, open the folder and edit the JSON file").place(x=0, y=400, width=500)
-    fileButton = tkinter.Button(frame, text="Open Folder", font=("Helvetica", 15), command=lambda: subprocess.Popen('explorer "subjects"'))
+    fileButton = tkinter.Button(frame, text="Open Folder", font=("Helvetica", 15),
+                                command=lambda: subprocess.Popen('explorer "subjects"'))
     fileButton.place(x=175, y=430, width=150, height=40)
 
 
@@ -366,8 +367,8 @@ def remove_check(value, box):
         box["values"] = ["Select an Option"]
         box.current(0)
 
-def delete(frame, subject, topic):
 
+def delete(frame, subject, topic):
     print()
 
     if topic == "All of it":
