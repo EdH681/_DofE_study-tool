@@ -20,12 +20,14 @@ size10 = (font, 10)
 size09 = (font, 9)
 
 
-def menu_button(frame):
-    button = tkinter.Button(frame, text="Menu", command=lambda: menu(frame))
-    button.place(x=14, y=45, height=30)
+# a button present in every interface to return to the previous interface
+def return_button(frame, command, text="Return"):
+    button = tkinter.Button(frame, text=text, command=command)
+    button.place(x=15, y=455, height=30)
 
 
-def load(subject, topic):
+# fetches the questions from the given json file and topic
+def load_questions(subject, topic):
     with open(f"subjects/{subject}.json", "r") as retrieve:
         data = json.load(retrieve)[topic]
     questions = []
@@ -35,6 +37,7 @@ def load(subject, topic):
     return questions
 
 
+# checks how the answer compares the entered answer within a threshold
 def check(attempt, answer, threshold=2):
     answer = answer.replace(" ", "")
     attempt = attempt.replace(" ", "")
@@ -45,17 +48,16 @@ def check(attempt, answer, threshold=2):
         if i in answer:
             correct += 1
             answer.remove(i)
-        else:
-            print(i)
-
     return correct > threshold
 
 
+# clears the entered frame of all widgets
 def clear(frame):
     for item in frame.winfo_children():
         item.destroy()
 
 
+# returns a list of options for the topic dropdown menu
 def get_subjects():
     options = ["Select an option"]
     for subject in os.listdir("subjects"):
@@ -73,7 +75,7 @@ def menu(frame):
 
     # Test Button
     startText = "Test Yourself"
-    testYourself = tkinter.Button(frame, text=startText, font=size20, command=lambda: selection(frame))
+    testYourself = tkinter.Button(frame, text=startText, font=size20, command=lambda: subject_select(frame))
     testYourself.place(x=50, y=baseY, width=400, height=50)
 
     # Add Button
@@ -93,7 +95,8 @@ def menu(frame):
 
 
 # QUIZ =================================================================================================================
-def selection(frame):
+
+def subject_select(frame):
     clear(frame)
 
     # Getting Subjects
@@ -126,11 +129,11 @@ def selection(frame):
     startButton.place(x=105, y=350, width=280, height=50)
 
     # Return to Menu
-    menu_button(frame)
+    return_button(frame, lambda: menu(frame), "Menu")
 
 
 def subject_check(value, box):
-    if value != "Select an option":
+    if value != "Select an option":  # checking a value has been entered
         box["state"] = "readonly"
         topics = ["Select an option"]
         with open(f"subjects/{value}.json", "r") as topicList:
@@ -138,7 +141,7 @@ def subject_check(value, box):
             for topic in data:
                 topics.append(topic)
         box["values"] = topics
-    else:
+    else:  # preventing the user to enter a topic unless a valid subject is entered
         box['state'] = "disabled"
         box["values"] = ["Select an Option"]
         box.current(0)
@@ -146,23 +149,25 @@ def subject_check(value, box):
 
 def question_grab(frame, subject, topic):
     try:
-        questions = load(subject.lower(), topic.lower())
-    except KeyError as e:
+        questions = load_questions(subject.lower(), topic.lower())
+    except KeyError: # the topic entered does not exist in the json file
         tkinter.Label(frame, text="Select a valid topic", fg="red", font=size09).place(x=105, y=400, width=280)
-        print(e)
-    except FileNotFoundError as e:
+    except FileNotFoundError:  # a json file with the subject entered does not exist
         tkinter.Label(frame, text="Select a valid subject", fg="red", font=size09).place(x=105, y=400, width=280)
     else:
-        quiz(frame, questions)
+        quiz_main(frame, questions)
 
 
-def quiz(frame, questions, questionNumber=1, correct=0, incorrect=0):
+# a funtion which is part of a loop to ask all questions in a random order
+def quiz_main(frame, questions, questionNumber=1, correct=0, incorrect=0):
     clear(frame)
+
     random.shuffle(questions)
+
     title = tkinter.Label(frame, text=f"Question {questionNumber}", font=size20b)
     title.place(x=0, y=10, width=500, height=50)
 
-    if questions:
+    if questions:  # only asks questions if there are questions remaining
         questionAnswer = questions.pop(0)
 
         question = tkinter.Label(frame, text=questionAnswer[0], font=size18, wraplength=455)
@@ -171,18 +176,16 @@ def quiz(frame, questions, questionNumber=1, correct=0, incorrect=0):
         answerBox = tkinter.Entry(frame, font=size18, justify="center")
         answerBox.place(x=50, y=300, height=50, width=400)
 
-        submitButton = tkinter.Button(frame, text="Submit", font=size15,
-                                      command=lambda: quiz_check(frame, answerBox.get(), questionAnswer, questions,
-                                                                 questionNumber, correct, incorrect))
+        submitButton = tkinter.Button(frame, text="Submit", font=size15, command=lambda: quiz_check(frame, answerBox.get(), questionAnswer, questions, questionNumber, correct, incorrect, submitButton))
         submitButton.place(x=150, y=360, height=40, width=200)
 
-        returnButton = tkinter.Button(frame, text="Return", command=lambda: selection(frame))
-        returnButton.place(x=10, y=470, width=50, height=25)
-    else:
+        return_button(frame, lambda: subject_select(frame))
+    else:  # once all questions have been asked, it moved onto the post menu screen
         quiz_complete(frame, correct, incorrect)
 
 
-def quiz_check(frame, entered, questionAnswer, questions, questionNumber, correct, incorrect):
+# a function to check if the question is correct, it updates the remaining questions and reruns the quiz function
+def quiz_check(frame, entered, questionAnswer, questions, questionNumber, correct, incorrect, submitButton):
     right = check(entered.lower(), questionAnswer[1])
     questionNumber += 1
     if right:
@@ -195,8 +198,9 @@ def quiz_check(frame, entered, questionAnswer, questions, questionNumber, correc
         incorrectLabel.place(x=0, y=270, width=500, height=30)
         incorrect += 1
 
-    continueButton = tkinter.Button(frame, text="Continue", font=size10,
-                                    command=lambda: quiz(frame, questions, questionNumber, correct, incorrect))
+    submitButton["state"] = "disabled" # doesn't allow the user to submit a response once the question has been answered
+
+    continueButton = tkinter.Button(frame, text="Continue", font=size10,command=lambda: quiz_main(frame, questions, questionNumber, correct, incorrect))
     continueButton.place(x=200, y=405, width=100, height=30)
 
 
@@ -245,38 +249,37 @@ def add_menu(frame):
     location = tkinter.Entry(frame, justify="center", font=size15)
     location.place(x=50, y=340, width=400, height=40)
 
-    addSubmit = tkinter.Button(frame, text="Submit", font=size12,
-                               command=lambda: add_checks(frame, subject.get(), separator.get(), location.get(),
-                                                          subjectTitle, separatorTitle, fileTitle))
+    addSubmit = tkinter.Button(frame, text="Submit", font=size12, command=lambda: add_checks(frame, subject.get(), separator.get(), location.get(), subjectTitle, separatorTitle, fileTitle))
     addSubmit.place(x=150, y=410, width=200, height=30)
 
-    menu_button(frame)
+    return_button(frame, lambda: menu(frame), "Menu")
 
 
-def add_checks(frame, subject, separator, filename, sub, sep, file):
-    tiptop = True
+# rather than creating a message to signify an error, these checks turn the title red
+def add_checks(frame, subject, separator, filename, subject_title, separator_title, filename_title):
+    ready_to_add = True
     filename = filename.strip('"')
 
     # is a separator selected
     if separator == "Select an Option":
-        sep["fg"] = "red"
-        tiptop = False
+        separator_title["fg"] = "red"
+        ready_to_add = False
     else:
-        sep["fg"] = "black"
+        separator_title["fg"] = "black"
 
     # has a file been entered
     if not filename:
-        tiptop = False
-        file["fg"] = "red"
+        ready_to_add = False
+        filename_title["fg"] = "red"
     else:
-        file["fg"] = "black"
+        filename_title["fg"] = "black"
 
     # has a subject been entered
     if not subject:
-        tiptop = False
-        sub["fg"] = "red"
+        ready_to_add = False
+        subject_title["fg"] = "red"
     else:
-        sub["fg"] = "black"
+        subject_title["fg"] = "black"
 
     # does the text file exist
     fName = filename.split(".")[0]
@@ -284,10 +287,10 @@ def add_checks(frame, subject, separator, filename, sub, sep, file):
         test = open(f"{fName}.txt", "r")
         test.close()
     except FileNotFoundError:
-        file["fg"] = "red"
-        tiptop = False
+        filename_title["fg"] = "red"
+        ready_to_add = False
     else:
-        file["fg"] = "black"
+        filename_title["fg"] = "black"
 
     # does the json file exist
     rawName = fName.split("\\")[-1].split(".")[0].lower()
@@ -300,29 +303,28 @@ def add_checks(frame, subject, separator, filename, sub, sep, file):
                     if i == rawName:
                         existsError = tkinter.Label(frame, text=f"A topic with that name already exists under {subject}", fg="red", font=size09)
                         existsError.place(x=0, y=380, width=500)
-                        tiptop = False
+                        ready_to_add = False
                         exists = True
                 if not exists:
                     tkinter.Label(frame, text="", fg="red").place(x=0, y=380, width=500)
         else:
-            tiptop = False
+            ready_to_add = False
 
-    if tiptop:
-        add(frame, subject, rawName, filename, separator)
+    if ready_to_add:
+        add_questions(frame, subject, rawName, filename, separator)
 
 
-def add(frame, subject, topic, path, separator):
+def add_questions(frame, subject, topic, path, separator):
     try:
         with open(path, "r") as pull:
             full = pull.readlines()
             questions = [i.split(separator)[0].strip() for i in full]
             answers = [i.split(separator)[1].strip() for i in full]
-    except IndexError:
+    except IndexError:  # A question has been entered in the text file with no corresponding answer
         tkinter.Label(frame, text="You have a question without an answer", fg="red", font=size09).place(x=0, y=390, width=500)
     info = {}
     for q, a in zip(questions, answers):
         info[q] = a
-    print(info)
     if not os.path.exists(f"subjects/{subject}.json"):
         with open(f"subjects/{subject}.json", "w") as create:
             json.dump({}, create)
@@ -332,7 +334,7 @@ def add(frame, subject, topic, path, separator):
     try:
         with open(f"subjects/{subject}.json", "w") as send:
             json.dump(current, send)
-    except json.JSONEncoder:
+    except json.JSONEncoder:  # an error updating the json file
         tkinter.Label(frame, text="Error adding set", fg="red", font=size09).place(x=0, y=450, width=500)
     else:
         tkinter.Label(frame, text="Set added successfully", fg="green", font=size09).place(x=0, y=450, width=500)
@@ -364,14 +366,14 @@ def remove_menu(frame):
     subButton = tkinter.Button(frame, text="Select", command=lambda: remove_check(subjectSelect.get(), topicSelect))
     subButton.place(x=315, y=150, height=22, width=100)
 
-    submitButton = tkinter.Button(frame, text="Delete", font=size15, command=lambda: delete(frame, subjectSelect.get().lower(), topicSelect.get()))
+    submitButton = tkinter.Button(frame, text="Delete", font=size15, command=lambda: remove_questions(frame, subjectSelect.get().lower(), topicSelect.get()))
     submitButton.place(x=150, y=320, width=200, height=40)
 
     tkinter.Label(frame, text="Alternatively, open the folder and edit the JSON file").place(x=0, y=400, width=500)
     fileButton = tkinter.Button(frame, text="Open Folder", font=size15, command=lambda: subprocess.Popen('explorer "subjects"'))
     fileButton.place(x=175, y=430, width=150, height=40)
 
-    menu_button(frame)
+    return_button(frame, lambda: menu(frame), "Menu")
 
 
 def remove_check(value, box):
@@ -389,28 +391,26 @@ def remove_check(value, box):
         box.current(0)
 
 
-def delete(frame, subject, topic):
-    print()
-
+def remove_questions(frame, subject, topic):
     if topic == "All of it":
         if tkinter.messagebox.askyesno("Warning", f"Do you want to delete {subject}?"):
             try:
                 os.remove(f"subjects/{subject}.json")
-            except FileNotFoundError:
+            except FileNotFoundError:  # no json file for the corresponding subject
                 tkinter.Label(frame, text="This subject doesn't exist", fg="red", font=size09).place(x=0, y=370, width=500)
             else:
                 tkinter.Label(frame, text="Subject deleted successfully", fg="green").place(x=0, y=370, width=500)
     else:
-        if tkinter.messagebox.askyesno("Warning", f"Do you want to delete {topic}?"):
+        if tkinter.messagebox.askyesno("Warning", f"Are you sure you want to delete {topic}?"):
             try:
                 with open(f"subjects/{subject}.json", "r") as retrieve:
                     data = json.load(retrieve)
                 del data[topic]
                 with open(f"subjects/{subject}.json", "w") as update:
                     json.dump(data, update)
-            except KeyError:
+            except KeyError:  # no set found with the topic entered
                 tkinter.Label(frame, text="This topic doesn't exist", fg="red", font=size09).place(x=0, y=370, width=500)
-            except FileNotFoundError:
+            except FileNotFoundError:  # no json file for the corresponding subject
                 tkinter.Label(frame, text="Invalid selection", fg="red", font=size09).place(x=0, y=370, width=500)
             else:
                 tkinter.Label(frame, text="Topic deleted successfully", fg="green", font=size09).place(x=0, y=370, width=500)
@@ -423,7 +423,7 @@ def viewer_menu(frame):
     viewerTitle = tkinter.Label(frame, text="Set Viewer", font=size20b)
     viewerTitle.pack()
 
-    menu_button(frame)
+    return_button(frame, lambda: menu(frame), "Menu")
 
     viewingArea = tkinter.Frame(frame, borderwidth=2, relief="ridge")
     viewingArea.place(x=50, y=200, width=400, height=250)
