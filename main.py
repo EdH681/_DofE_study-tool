@@ -38,6 +38,14 @@ def clear(frame):
         item.destroy()
 
 
+def get_subjects():
+    options = ["Select an option"]
+    for subject in os.listdir("subjects"):
+        if subject.split(".")[1] == "json":
+            options.append(subject.split(".")[0].title())
+    return options
+
+
 def menu(frame):
     clear(frame)
     baseY = 200
@@ -52,12 +60,12 @@ def menu(frame):
 
     # Add Button
     addText = "Add More Question Sets"
-    addButton = tkinter.Button(frame, text=addText, font=("Helvetica", 20), command=lambda: addMenu(frame))
+    addButton = tkinter.Button(frame, text=addText, font=("Helvetica", 20), command=lambda: add_menu(frame))
     addButton.place(x=50, y=baseY + 55, width=400, height=50)
 
     # View Button
     viewText = "View All Question Sets"
-    viewButton = tkinter.Button(frame, text=viewText, font=("Helvetica", 20))
+    viewButton = tkinter.Button(frame, text=viewText, font=("Helvetica", 20), command=lambda: viewer_menu(frame))
     viewButton.place(x=50, y=baseY + 110, width=400, height=50)
 
     # Remove Button
@@ -71,10 +79,7 @@ def selection(frame):
     clear(frame)
 
     # Getting Subjects
-    options = ["Select an option"]
-    for subject in os.listdir("subjects"):
-        if subject.split(".")[1] == "json":
-            options.append(subject.split(".")[0].title())
+    options = get_subjects()
 
     # Title
     title = tkinter.Label(frame, text="Select a Subject and a Topic", font=("Helvetica", 20, "bold"))
@@ -98,8 +103,8 @@ def selection(frame):
     subjectButton.place(x=275, y=150, width=100, height=22)
 
     # Start Button
-    startButton = tkinter.Button(frame, text="Start", font=("Helvetica", 20), command=lambda: \
-        questionGrab(frame, subjectSelect.get(), topicSelect.get()))
+    startButton = tkinter.Button(frame, text="Start", font=("Helvetica", 20),
+                                 command=lambda: question_grab(frame, subjectSelect.get(), topicSelect.get()))
     startButton.place(x=105, y=350, width=280, height=50)
 
     # Return to Menu
@@ -122,14 +127,13 @@ def subject_check(value, box):
         box.current(0)
 
 
-def questionGrab(frame, subject, topic):
+def question_grab(frame, subject, topic):
     try:
         questions = load(subject.lower(), topic.lower())
     except KeyError as e:
         tkinter.Label(frame, text="Select a valid topic", fg="red").place(x=105, y=400, width=280)
         print(e)
     except FileNotFoundError as e:
-        print(e)
         tkinter.Label(frame, text="Select a valid subject", fg="red").place(x=105, y=400, width=280)
     else:
         quiz(frame, questions)
@@ -158,7 +162,7 @@ def quiz(frame, questions, questionNumber=1, correct=0, incorrect=0):
         returnButton = tkinter.Button(frame, text="Return", command=lambda: selection(frame))
         returnButton.place(x=10, y=470, width=50, height=25)
     else:
-        quizComplete(frame, correct, incorrect)
+        quiz_complete(frame, correct, incorrect)
 
 
 def quiz_check(frame, entered, questionAnswer, questions, questionNumber, correct, incorrect):
@@ -179,7 +183,7 @@ def quiz_check(frame, entered, questionAnswer, questions, questionNumber, correc
     continueButton.place(x=200, y=405, width=100, height=30)
 
 
-def quizComplete(frame, correct, incorrect):
+def quiz_complete(frame, correct, incorrect):
     clear(frame)
     tkinter.Label(frame, text="Quiz Complete", font=("Helvetica", 25, "bold")).pack()
     correctAnswered = tkinter.Label(frame, text=f"{correct} correctly answered", font=("Helvetica", 20), fg="green")
@@ -191,7 +195,7 @@ def quizComplete(frame, correct, incorrect):
 
 
 # ADDING ===============================================================================================================
-def addMenu(frame):
+def add_menu(frame):
     clear(frame)
     title = tkinter.Label(frame, text="Add a New Study Set", font=("Helvetica", 20, "bold"))
     title.pack(pady=10)
@@ -228,12 +232,12 @@ def addMenu(frame):
     location.place(x=50, y=340, width=400, height=40)
 
     addSubmit = tkinter.Button(frame, text="Submit", font=("Helvetica", 13),
-                               command=lambda: addChecks(frame, subject.get(), separator.get(), location.get(),
-                                                         subjectTitle, separatorTitle, fileTitle))
+                               command=lambda: add_checks(frame, subject.get(), separator.get(), location.get(),
+                                                          subjectTitle, separatorTitle, fileTitle))
     addSubmit.place(x=150, y=410, width=200, height=30)
 
 
-def addChecks(frame, subject, separator, filename, sub, sep, file):
+def add_checks(frame, subject, separator, filename, sub, sep, file):
     tiptop = True
     filename = filename.strip('"')
 
@@ -389,16 +393,80 @@ def delete(frame, subject, topic):
                     json.dump(data, update)
             except KeyError:
                 tkinter.Label(frame, text="This topic doesn't exist", fg="red").place(x=0, y=370, width=500)
+            except FileNotFoundError:
+                tkinter.Label(frame, text="Invalid selection", fg="red").place(x=0, y=370, width=500)
             else:
                 tkinter.Label(frame, text="Topic deleted successfully", fg="green").place(x=0, y=370, width=500)
 
 
+# VIEWING ==============================================================================================================
+def viewer_menu(frame):
+    clear(frame)
+
+    viewerTitle = tkinter.Label(frame, text="Set Viewer", font=("Helvetica", 20, "bold"))
+    viewerTitle.pack()
+
+    returnButton = tkinter.Button(frame, text="Menu", command=lambda: menu(frame))
+    returnButton.place(x=10, y=470, width=50, height=25)
+
+    viewingArea = tkinter.Frame(frame, borderwidth=2, relief="ridge")
+    viewingArea.place(x=50, y=200, width=400, height=250)
+
+    topics = ["Select an option"]
+    tkinter.Label(frame, text="Select the topic", font=("Helvetica", 9, "bold")).place(x=250, y=80)
+    topicSelect = ttk.Combobox(frame, values=topics, state="disabled")
+    topicSelect.current(0)
+    topicSelect.place(x=250, y=100)
+
+    options = get_subjects()
+    tkinter.Label(frame, text="Select the subject", font=("Helvetica", 9, "bold")).place(x=100, y=80)
+    subjectSelect = ttk.Combobox(frame, values=options, state="readonly")
+    subjectSelect.current(0)
+    subjectSelect.place(x=100, y=100)
+    subjectSubmit = tkinter.Button(frame, text="Submit",
+                                   command=lambda: subject_check(subjectSelect.get(), topicSelect))
+    subjectSubmit.place(x=101, y=130, width=140, height=25)
+
+    scroll = tkinter.Scrollbar(frame, relief="sunken", bd=2)
+    scroll.place(x=450, y=200, height=250)
+
+    contents = tkinter.Text(viewingArea, yscrollcommand=scroll.set, wrap="word")
+    contents.pack()
+
+
+
+    topicSubmit = tkinter.Button(frame, text="Submit",
+                                 command=lambda: view_update(contents, subjectSelect.get().lower(),
+                                                             topicSelect.get(), frame))
+    topicSubmit.place(x=250, y=130, width=140, height=25)
+
+
+def view_update(display, subject, topic, frame):
+    display.delete("1.0", "end")
+    try:
+        with open(f"subjects/{subject}.json", "r") as retrieve:
+            topics = json.load(retrieve)[topic]
+        questions = [(i, topics[i]) for i in topics]
+        text = ""
+        for question in questions:
+            text = f"{text}\n{question[0]}\n>{question[1]}\n{'-' * 49}"
+
+        display.insert(tkinter.END, text)
+    except FileNotFoundError:
+        tkinter.Label(frame, text="Invalid subject", fg="red").place(x=0, y=165, width=500)
+    except KeyError:
+        tkinter.Label(frame, text="Invalid topic", fg="red").place(x=0, y=165, width=500)
+    else:
+        tkinter.Label(frame, text="", fg="red").place(x=0, y=165, width=500)
+
+
+
 # MAIN =================================================================================================================
 splashRoot = tkinter.Tk()
-splashRoot.geometry(f"200x200")
+splashRoot.geometry(f"500x500")
 splashRoot.title("")
 nerd = tkinter.PhotoImage(file="assets/nerd.png")
-tkinter.Label(splashRoot, image=nerd).pack()
+tkinter.Label(splashRoot, image=nerd).place(relx=0.5, rely=0.5, anchor="center")
 
 splashRoot.after(500, lambda: main(splashRoot))
 
