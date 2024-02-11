@@ -322,6 +322,9 @@ def add_questions(frame, subject, topic, path, separator):
             answers = [i.split(separator)[1].strip() for i in full]
     except IndexError:  # A question has been entered in the text file with no corresponding answer
         tkinter.Label(frame, text="You have a question without an answer", fg="red", font=size09).place(x=0, y=390, width=500)
+    except WindowsError:
+        tkinter.Label(frame, text="Unable to access the text file", fg="red", font=size09).place(x=0, y=390, width=500)
+
     info = {}
     for q, a in zip(questions, answers):
         info[q] = a
