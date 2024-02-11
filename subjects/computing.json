@@ -1,1 +1,12 @@
-{"databases": {"A database which uses one table (... database)": "flat file", "Two or more linked databases (... database)": "relational", "Something which data is stored about": "entity", "A property of an entity": "attribute", "An attribute used to identify a table": "primary key", "A combination of two or more attributes to identify a table": "composite key", "An attribute in a table which is a primary key in another": "foreign key", "Turning a flat file database into the best possible relational database": "normalisation"}, "fde cycle": {"Carries out calculations and logic checks (full name)": "arithmetic logic unit", "Coordinates the activities of the CPU": "control unit", "A continuous series of pulses to coordinate the CPU": "clock", "Very fast volatile storage to store binary values": "registers", "Holds the address of the next instruction to be executed(full name)": "program counter", "Holds the address of the current instruction being read or written (full name)": "memory address register", "Temporarily holds data to be read or written (full name)": "memory data register", "Stores the current instruction (full name)": "current instruction register", "Contains bits which indicate the result of an action (full name)": "status register", "A signal sent from the processor or hardware which ends the process": "interrupt"}}
+{
+  "databases": {
+    "A database which uses one table": "flat file database",
+    "Two or more linked databases": "relational database",
+    "Something which data is stored about": "entity",
+    "A property of an entity": "attribute",
+    "An attribute used to identify a table": "primary key",
+    "A combination of two or more attributes to identify a table": "composite key",
+    "An attribute in a table which is a primary key in another": "foreign key",
+    "Turning a flat file database into the best possible relational database": "normalisation"
+  }
+}
